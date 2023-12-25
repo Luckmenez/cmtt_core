@@ -1,17 +1,24 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
+import { PrismaModule } from './prisma/prisma.module';
+import { UserModule } from './modules/user/user.module';
+import { IsUniqueConstraint } from './validators/IsUnique.validator';
 
-const enviornment = process.env.NODE_ENV
+const env = process.env.NODE_ENV;
 
 @Module({
-  imports: [ConfigModule.forRoot(
-    {
-      envFilePath: enviornment === 'development' ? '.env.dev' : '.env'
-    }
-  )],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    ConfigModule.forRoot({
+      envFilePath:
+        env === 'development'
+          ? '.env.dev'
+          : env === 'test'
+            ? '.env.test'
+            : 'env',
+    }),
+    PrismaModule,
+    UserModule,
+  ],
+  providers: [IsUniqueConstraint],
 })
-export class AppModule { }
+export class AppModule {}

@@ -1,8 +1,144 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  extensions = [uuidOssp(map: "uuid-ossp")]
+}
+
+model candidate {
+  id                                String                        @id(map: "PK_b0ddec158a9a60fbc785281581b") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  voter_registration                String?                       @db.VarChar
+  electoralDischargeCertificate     String?                       @db.VarChar
+  deficient                         Boolean
+  deficient_description             String?                       @db.VarChar
+  accessibility                     Boolean
+  accessibility_description         String?                       @db.VarChar
+  criminalRecordCertificate         String?                       @db.VarChar
+  proofAddress                      String?                       @db.VarChar
+  candidateCurriculum               String?                       @db.VarChar
+  candidatePhoto                    String?                       @db.VarChar
+  isValid                           Boolean?
+  first_option                      candidate_first_option_enum
+  second_option                     candidate_second_option_enum?
+  candidate_description             String?                       @db.VarChar
+  filiationDocumentCopy             String?                       @db.VarChar
+  presentationLetter                String?                       @db.VarChar
+  attachmentDocument                String?                       @db.VarChar
+  document                          String                        @db.VarChar
+  race                              candidate_race_enum
+  gender                            candidate_gender_enum
+  candidatureInvalidationReason     String?                       @db.VarChar
+  candidatureInvalidationAttachment String?                       @db.VarChar
+  cpfAttachment                     String                        @db.VarChar
+  createdAt                         DateTime                      @default(now()) @db.Timestamp(6)
+  updatedAt                         DateTime                      @default(now()) @db.Timestamp(6)
+  deletedAt                         DateTime?                     @db.Timestamp(6)
+  users                             users?
+}
+
+model electors {
+  id         String    @id(map: "PK_3a0910fdff885661c3a5a1ecf3e") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  created_at DateTime  @default(now()) @db.Timestamp(6)
+  updated_at DateTime  @default(now()) @db.Timestamp(6)
+  deleted_at DateTime? @db.Timestamp(6)
+  document   String    @db.VarChar
+  user_id    String?   @unique(map: "REL_9ac3035d01d03b93df73d961e1") @db.Uuid
+  users      users?    @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "FK_9ac3035d01d03b93df73d961e10")
+}
+
+model migrations {
+  id        Int    @id(map: "PK_8c82d7f526340ab734260ea46be") @default(autoincrement())
+  timestamp BigInt
+  name      String @db.VarChar
+}
+
+model session {
+  id        Int       @id(map: "PK_f55da76ac1c3ac420f444d2ff11") @default(autoincrement())
+  createdAt DateTime  @default(now()) @db.Timestamp(6)
+  deletedAt DateTime? @db.Timestamp(6)
+  userId    String?   @db.Uuid
+  users     users?    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_3d2f174ef04fb312fdebd0ddc53")
+
+  @@index([userId], map: "IDX_3d2f174ef04fb312fdebd0ddc5")
+}
+
+model users {
+  id          String          @id(map: "PK_a3ffb1c0c8416b9fc6f907b7433") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name        String?         @db.VarChar
+  cpf         String?         @unique(map: "UQ_230b925048540454c8b4c481e1c") @db.VarChar
+  email       String?         @db.VarChar
+  password    String          @db.VarChar
+  role        users_role_enum @default(user)
+  created_at  DateTime        @default(now()) @db.Timestamp(6)
+  updated_at  DateTime        @default(now()) @db.Timestamp(6)
+  deleted_at  DateTime?       @db.Timestamp(6)
+  candidateId String?         @unique(map: "REL_5c69b681c2b3f234bf6833507a") @db.Uuid
+  electors    electors?
+  session     session[]
+  candidate   candidate?      @relation(fields: [candidateId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5c69b681c2b3f234bf6833507a3")
+}
+
+enum candidate_first_option_enum {
+  meio_ambiente_e_sa_de                 @map("meio ambiente e saúde")
+  juventude
+  sindicatos_dos_trabalhadores          @map("sindicatos dos trabalhadores")
+  organiza__es_da_sociedade_civil___OSC @map("organizações da sociedade civil - OSC")
+  ciclistas
+  pessoas_com_defici_ncia               @map("pessoas com deficiência")
+  idosos
+  movimento_estudantil_secundarista     @map("movimento estudantil secundarista")
+  movimento_estudantil_universit_rio    @map("movimento estudantil universitário")
+  movimentos_sociais                    @map("movimentos sociais")
+  mobilidade_a_p_                       @map("mobilidade a pé")
+  Regional_Norte                        @map("Regional Norte")
+  Regional_Sul                          @map("Regional Sul")
+  Regional_Centro                       @map("Regional Centro")
+  Regional_Leste                        @map("Regional Leste")
+  Regional_Oeste                        @map("Regional Oeste")
+  EMPTY_ENUM_VALUE                      @map("")
+}
+
+enum candidate_gender_enum {
+  masculino
+  feminino
+  n_o_bin_rio           @map("não binário")
+  prefiro_n_o_responder @map("prefiro não responder")
+}
+
+enum candidate_race_enum {
+  branco
+  negro
+  pardo
+  amarelo
+  ind_gena @map("indígena")
+  outro
+}
+
+enum candidate_second_option_enum {
+  meio_ambiente_e_sa_de                 @map("meio ambiente e saúde")
+  juventude
+  sindicatos_dos_trabalhadores          @map("sindicatos dos trabalhadores")
+  organiza__es_da_sociedade_civil___OSC @map("organizações da sociedade civil - OSC")
+  ciclistas
+  pessoas_com_defici_ncia               @map("pessoas com deficiência")
+  idosos
+  movimento_estudantil_secundarista     @map("movimento estudantil secundarista")
+  movimento_estudantil_universit_rio    @map("movimento estudantil universitário")
+  movimentos_sociais                    @map("movimentos sociais")
+  mobilidade_a_p_                       @map("mobilidade a pé")
+  Regional_Norte                        @map("Regional Norte")
+  Regional_Sul                          @map("Regional Sul")
+  Regional_Centro                       @map("Regional Centro")
+  Regional_Leste                        @map("Regional Leste")
+  Regional_Oeste                        @map("Regional Oeste")
+  EMPTY_ENUM_VALUE                      @map("")
+}
+
+enum users_role_enum {
+  admin
+  user
 }
